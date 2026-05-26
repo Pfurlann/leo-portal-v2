@@ -16,7 +16,9 @@ export async function middleware(req: NextRequest) {
 
   if (isPublic || isEventoPublico) return NextResponse.next()
 
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
+  // NextAuth v5 uses __Secure- prefix in production (HTTPS) — must match cookie name + JWT salt
+  const secureCookie = process.env.NODE_ENV === 'production'
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET, secureCookie })
 
   if (!token) {
     const loginUrl = new URL('/login', req.url)
