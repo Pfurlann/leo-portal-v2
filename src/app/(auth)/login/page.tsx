@@ -3,8 +3,12 @@ import { redirect } from 'next/navigation'
 import { LoginForm } from './LoginForm'
 
 export default async function LoginPage() {
-  const session = await auth()
-  if (session?.user) redirect('/dashboard')
+  try {
+    const session = await auth()
+    if (session?.user?.email) redirect('/dashboard')
+  } catch {
+    // auth failure on login page is non-fatal — just show login form
+  }
 
   return (
     <div style={{
