@@ -1,8 +1,16 @@
 import NextAuth from 'next-auth'
 import Credentials from 'next-auth/providers/credentials'
 import bcrypt from 'bcryptjs'
-import { db } from '@/lib/db'
+import { createClient } from '@supabase/supabase-js'
 import { calcularAlAtual } from './utils'
+
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  )
+}
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -17,51 +25,49 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const email = String(credentials.email).toLowerCase().trim()
         const senha = String(credentials.senha)
 
-        // Find user in usuarios_acessos
-        const usuario = await db.usuarioAcesso.findUnique({
-          where: { email },
-          include: { clube: true },
-        })
+        const supabase = getSupabaseAdmin()
 
-        if (!usuario || !usuario.ativo) return null
+        const { data: usuario, error } = await supabase
+          .from('usuarios_acessos')
+          .select('*, clubes(nome)')
+          .eq('email', email)
+          .single()
 
-        // Password check: support bcrypt hash and plaintext (migration period)
+        if (error || !usuario || !usuario.ativo) return null
+
+        // Password check: bcrypt hash or plaintext (migration period)
         let passwordValid = false
         if (usuario.senha) {
           const isHash = usuario.senha.startsWith('$2')
-          if (isHash) {
-            passwordValid = await bcrypt.compare(senha, usuario.senha)
-          } else {
-            // Plaintext comparison (legacy — will be hashed on next login)
-            passwordValid = usuario.senha === senha
-          }
+          passwordValid = isHash
+            ? await bcrypt.compare(senha, usuario.senha)
+            : usuario.senha === senha
         }
 
         if (!passwordValid) return null
 
-        // Get cargo from nominata_dirigentes
         const alAtual = calcularAlAtual()
         let cargo: string | null = null
 
         try {
-          const nominata = await db.nominataDirigente.findFirst({
-            where: {
-              clube: usuario.clubeNome,
-              anoLeonistico: alAtual,
-            },
-            select: { cargo: true },
-          })
+          const { data: nominata } = await supabase
+            .from('nominata_dirigentes')
+            .select('cargo')
+            .eq('clube', usuario.clube_nome)
+            .eq('ano_leonistico', alAtual)
+            .limit(1)
+            .single()
           cargo = nominata?.cargo ?? null
         } catch {
-          // nominata lookup failure is non-fatal
+          // non-fatal
         }
 
         return {
           id: usuario.id,
           email: usuario.email,
-          clubeId: usuario.clubeId ?? '',
-          clubeNome: usuario.clubeNome,
-          tipoAcesso: (usuario.tipoAcesso ?? 'clube') as 'distrito' | 'regiao' | 'clube' | 'evento',
+          clubeId: usuario.clube_id ?? '',
+          clubeNome: usuario.clube_nome,
+          tipoAcesso: (usuario.tipo_acesso ?? 'clube') as 'distrito' | 'regiao' | 'clube' | 'evento',
           cargo,
           alAtual,
         }
