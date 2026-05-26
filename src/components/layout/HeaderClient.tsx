@@ -23,7 +23,7 @@ const TABS = [
     cargos: ['Presidente'],
     tiposAcesso: ['distrito'],
   },
-  { key: 'gerencial', label: 'Visão Gerencial', path: '/gerencial', tiposAcesso: ['distrito'] },
+  { key: 'gerencial', label: 'Visão Gerencial', path: '/gerencial', tiposAcesso: ['distrito', 'regiao'] },
 ]
 
 interface User {
