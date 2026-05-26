@@ -1,0 +1,480 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Clube {
+  id               String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  nome             String    @unique @db.VarChar
+  regiao           String?   @db.VarChar
+  planilhaId       String?   @map("planilha_id") @db.VarChar
+  distrito         String?   @default("D8") @db.VarChar
+  distritoMultiplo String?   @default("LD") @map("distrito_multiplo") @db.VarChar
+  email            String?
+  status           String?   @default("Ativo")
+  dataFundacao     String?   @map("data_fundacao")
+  lionsPatrocinador String?  @map("lions_patrocinador")
+  createdAt        DateTime? @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt        DateTime? @updatedAt @map("updated_at") @db.Timestamptz()
+
+  // Relations
+  usuariosAcessos    UsuarioAcesso[]
+  pessoasRtma        PessoaRtma[]
+  amigosConselheiros AmigoConselheiro[]
+  campanhas          Campanha[]
+  atividades         Atividade[]
+  eventos            Evento[]           @relation("ClubeSede")
+  eventosInscricoes  EventoInscricao[]
+
+  @@map("clubes")
+}
+
+model UsuarioAcesso {
+  id                String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  clubeId           String?   @map("clube_id") @db.Uuid
+  clubeNome         String    @map("clube_nome") @db.VarChar
+  email             String    @unique @db.VarChar
+  senha             String?   @db.VarChar
+  tipoAcesso        String?   @map("tipo_acesso") @db.VarChar
+  ativo             Boolean?  @default(true)
+  authUserId        String?   @map("auth_user_id") @db.Uuid
+  resetToken        String?   @map("reset_token")
+  resetTokenExpires DateTime? @map("reset_token_expires") @db.Timestamptz()
+  createdAt         DateTime? @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt         DateTime? @updatedAt @map("updated_at") @db.Timestamptz()
+
+  clube Clube? @relation(fields: [clubeId], references: [id])
+
+  @@map("usuarios_acessos")
+}
+
+model PessoaRtma {
+  id               String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  clubeId          String?   @map("clube_id") @db.Uuid
+  clubeNome        String    @map("clube_nome") @db.VarChar
+  status           String?   @default("Ativo") @db.VarChar
+  tipo             String?   @db.VarChar
+  numeroAssociado  String?   @map("numero_associado") @db.VarChar
+  nome             String    @db.VarChar
+  cargo            String?   @db.VarChar
+  formacao         String?   @db.VarChar
+  profissao        String?   @db.VarChar
+  dataInicioPreLeo DateTime? @map("data_inicio_pre_leo") @db.Date
+  associadoDesde   DateTime? @map("associado_desde") @db.Date
+  dataDesligamento DateTime? @map("data_desligamento") @db.Date
+  dataPosseLions   DateTime? @map("data_posse_lions") @db.Date
+  dataNascimento   DateTime? @map("data_nascimento") @db.Date
+  telefone         String?   @db.VarChar
+  email            String?   @db.VarChar
+  logradouro       String?   @db.VarChar
+  cidade           String?   @db.VarChar
+  cep              String?   @db.VarChar
+  acaoTrimestre    String?   @map("acao_trimestre") @db.VarChar
+  foraneo          Boolean?  @default(false)
+  historicoClubes  Json?     @default("[]") @map("historico_clubes")
+  restricaoAlimentar String? @map("restricao_alimentar")
+  linhaOriginal    Int?      @map("linha_original")
+  createdAt        DateTime? @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt        DateTime? @updatedAt @map("updated_at") @db.Timestamptz()
+
+  clube Clube? @relation(fields: [clubeId], references: [id])
+
+  @@map("pessoas_rtma")
+}
+
+model AmigoConselheiro {
+  id             String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  clubeId        String?   @map("clube_id") @db.Uuid
+  clubeNome      String    @map("clube_nome") @db.VarChar
+  nome           String    @db.VarChar
+  tipo           String?   @db.VarChar
+  lionsClube     String?   @map("Lions_Clube") @db.VarChar
+  dataNascimento String?   @map("Data_Nascimento") @db.VarChar
+  campolivre     DateTime? @db.Date
+  email          String?   @map("Email") @db.VarChar
+  endereco       String?   @map("Endereco") @db.VarChar
+  cidade         String?   @map("Cidade") @db.VarChar
+  cep            String?   @map("CEP") @db.VarChar
+  campolivre2    String?   @db.VarChar
+  linhaOriginal  Int?      @map("linha_original")
+  createdAt      DateTime? @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime? @updatedAt @map("updated_at") @db.Timestamptz()
+
+  clube Clube? @relation(fields: [clubeId], references: [id])
+
+  @@map("amigos_conselheiros")
+}
+
+model NominataDirigente {
+  id            String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  clube         String    @db.VarChar
+  cargo         String    @db.VarChar
+  nome          String    @db.VarChar
+  urlFoto       String?   @map("url_foto")
+  anoLeonistico String?   @default("2025-2026") @map("ano_leonistico") @db.VarChar
+  dataCadastro  DateTime? @map("data_cadastro") @db.Timestamptz()
+  dataEdicao    DateTime? @map("data_edicao") @db.Timestamptz()
+  formacao      String?   @db.VarChar
+  profissao     String?   @db.VarChar
+  clubeOrigemId String?   @map("clube_origem_id") @db.Uuid
+  pessoaRtmaId  String?   @map("pessoa_rtma_id") @db.Uuid
+  pessoaAmigoId String?   @map("pessoa_amigo_id") @db.Uuid
+  createdAt     DateTime? @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt     DateTime? @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@map("nominata_dirigentes")
+}
+
+model PastPresidente {
+  id            String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  clubeNome     String    @map("clube_nome")
+  pessoaNome    String    @map("pessoa_nome")
+  anoLeonistico String?   @default("2025-2026") @map("ano_leonistico") @db.VarChar
+  createdAt     DateTime? @default(now()) @map("created_at") @db.Timestamptz()
+
+  @@map("past_presidentes")
+}
+
+model Campanha {
+  id                              String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  clubeId                         String?   @map("clube_id") @db.Uuid
+  clubeNome                       String    @map("clube_nome") @db.VarChar
+  dataRegistro                    DateTime? @map("data_registro") @db.Timestamptz()
+  al                              String?   @db.VarChar
+  trimestre                       String?   @db.VarChar
+  titulo                          String    @db.VarChar
+  objetivo                        String?   @db.VarChar
+  dataInicio                      DateTime? @map("data_inicio") @db.Timestamptz()
+  dataFim                         DateTime? @map("data_fim") @db.Timestamptz()
+  coordenador                     String?   @db.VarChar
+  comissao                        String?   @db.VarChar
+  membrosComissao                 String?   @map("membros_comissao") @db.VarChar
+  associadosPresentes             String?   @map("associados_presentes") @db.VarChar
+  qtdAssociadosPresentes          Int?      @map("qtd_associados_presentes")
+  preLeoPresentes                 String?   @map("pre_leo_presentes") @db.VarChar
+  qtdPreLeoPresentes              Int?      @map("qtd_pre_leo_presentes")
+  amigosConselheirosPresentes     String?   @map("amigos_conselheiros_presentes") @db.VarChar
+  qtdAmigosConselheirosPresentes  Int?      @map("qtd_amigos_conselheiros_presentes")
+  pessoasImpactadas               Int?      @map("pessoas_impactadas")
+  custoCampanha                   Decimal?  @map("custo_campanha") @db.Decimal
+  companheirosLeoesPresentes      Int?      @map("companheiros_leoes_presentes")
+  horasTrabalhadasPorPessoa       Decimal?  @map("horas_trabalhadas_por_pessoa") @db.Decimal
+  horasTotaisTrabalhadas          Decimal?  @map("horas_totais_trabalhadas") @db.Decimal
+  descricaoCampanha               String?   @map("descricao_campanha")
+  eixoD8                          String?   @map("eixo_d8") @db.VarChar
+  eixoDm                          String?   @map("eixo_dm") @db.VarChar
+  fotoOficialUrl                  String?   @map("foto_oficial_url")
+  videoUrl                        String?   @map("video_url")
+  outrasFotosUrl                  String?   @map("outras_fotos_url")
+  descricaoHtml                   String?   @map("descricao_html")
+  temParceria                     Boolean?  @map("tem_parceria")
+  entidadeParceira                String?   @map("entidade_parceira") @db.VarChar
+  tipoParceria                    String?   @map("tipo_parceria") @db.VarChar
+  descricaoParceria               String?   @map("descricao_parceria")
+  comentarioDistrital             String?   @map("comentario_distrital")
+  marcadoCorrigido                Boolean?  @map("marcado_corrigido")
+  quemCorrigiu                    String?   @map("quem_corrigiu") @db.VarChar
+  divulgacao                      String?
+  pontosMelhorar                  String?   @map("pontos_melhorar")
+  feedback                        String?
+  localRealizacao                 String?   @db.VarChar
+  idUnicoOriginal                 String?   @map("id_unico_original") @db.VarChar
+  linhaOriginal                   Int?      @map("linha_original")
+  createdAt                       DateTime? @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt                       DateTime? @updatedAt @map("updated_at") @db.Timestamptz()
+
+  clube Clube? @relation(fields: [clubeId], references: [id])
+
+  @@map("campanhas")
+}
+
+model CampanhaSelecionada {
+  id           String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  campanhaId   String    @map("campanha_id") @db.VarChar
+  clubeNome    String    @map("clube_nome") @db.VarChar
+  usuarioEmail String    @map("usuario_email") @db.VarChar
+  dataSelecao  DateTime? @map("data_selecao") @db.Timestamptz()
+  createdAt    DateTime? @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt    DateTime? @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@map("campanhas_selecionadas")
+}
+
+model Atividade {
+  id                             String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  clubeId                        String?   @map("clube_id") @db.Uuid
+  clubeNome                      String    @map("clube_nome") @db.VarChar
+  dataRegistro                   DateTime? @map("data_registro") @db.Timestamptz()
+  al                             String?   @db.VarChar
+  trimestre                      String?   @db.VarChar
+  titulo                         String    @db.VarChar
+  tipoAtividade                  String?   @map("tipo_atividade") @db.VarChar
+  dataInicio                     DateTime? @map("data_inicio") @db.Timestamptz()
+  horaInicio                     String?   @map("hora_inicio") @db.VarChar
+  dataFim                        DateTime? @map("data_fim") @db.Timestamptz()
+  horaFim                        String?   @map("hora_fim") @db.VarChar
+  localAtividade                 String?   @map("local_atividade") @db.VarChar
+  associadosPresentes            String?   @map("associados_presentes") @db.VarChar
+  qtdAssociadosPresentes         Int?      @map("qtd_associados_presentes")
+  preLeosPresentes               String?   @map("pre_leos_presentes") @db.VarChar
+  qtdPreLeosPresentes            Int?      @map("qtd_pre_leos_presentes")
+  leoLeaoPresentes               String?   @map("leo_leao_presentes") @db.VarChar
+  qtdLeoLeaoPresentes            Int?      @map("qtd_leo_leao_presentes")
+  amigosConselheirosPresentes    String?   @map("amigos_conselheiros_presentes") @db.VarChar
+  qtdAmigosConselheirosPresentes Int?      @map("qtd_amigos_conselheiros_presentes")
+  outrosLions                    Int?      @map("outros_lions")
+  descricaoAtividade             String?   @map("descricao_atividade")
+  fotoOficialUrl                 String?   @map("foto_oficial_url")
+  duracaoTotalMinutos            Int?      @map("duracao_total_minutos")
+  comentarioDistrital            String?   @map("comentario_distrital")
+  marcadoCorrigido               Boolean?  @map("marcado_corrigido")
+  quemCorrigiu                   String?   @map("quem_corrigiu") @db.VarChar
+  idUnicoOriginal                String?   @map("id_unico_original") @db.VarChar
+  linhaOriginal                  Int?      @map("linha_original")
+  createdAt                      DateTime? @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt                      DateTime? @updatedAt @map("updated_at") @db.Timestamptz()
+
+  clube Clube? @relation(fields: [clubeId], references: [id])
+
+  @@map("atividades")
+}
+
+model Configuracao {
+  id               String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  al               String    @unique @db.VarChar
+  trimestre1Inicio DateTime? @map("trimestre_1_inicio") @db.Date
+  trimestre1Fim    DateTime? @map("trimestre_1_fim") @db.Date
+  trimestre2Inicio DateTime? @map("trimestre_2_inicio") @db.Date
+  trimestre2Fim    DateTime? @map("trimestre_2_fim") @db.Date
+  trimestre3Inicio DateTime? @map("trimestre_3_inicio") @db.Date
+  trimestre3Fim    DateTime? @map("trimestre_3_fim") @db.Date
+  trimestre4Inicio DateTime? @map("trimestre_4_inicio") @db.Date
+  trimestre4Fim    DateTime? @map("trimestre_4_fim") @db.Date
+  ativo            Boolean?  @default(true)
+
+  @@map("configuracoes")
+}
+
+model SolicitacaoAlteracao {
+  id                   String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  tipo                 String    @db.VarChar
+  tipoItem             String    @map("tipo_item") @db.VarChar
+  itemId               String    @map("item_id") @db.VarChar
+  clubeNome            String    @map("clube_nome") @db.VarChar
+  usuarioEmail         String    @map("usuario_email") @db.VarChar
+  trimestreSolicitado  String?   @map("trimestre_solicitado") @db.VarChar
+  alSolicitado         String?   @map("al_solicitado") @db.VarChar
+  justificativa        String
+  dadosAnteriores      Json?     @map("dados_anteriores")
+  dadosNovos           Json?     @map("dados_novos")
+  status               String?   @default("pendente") @db.VarChar
+  aprovadoPor          String?   @map("aprovado_por") @db.VarChar
+  dataAprovacao        DateTime? @map("data_aprovacao") @db.Timestamptz()
+  observacoesAprovacao String?   @map("observacoes_aprovacao")
+
+  @@map("solicitacoes_alteracao")
+}
+
+model Evento {
+  id                               String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  nome                             String    @db.VarChar
+  clubeSedeId                      String?   @map("clube_sede_id") @db.Uuid
+  clubeSedeNome                    String    @map("clube_sede_nome") @db.VarChar
+  dataEvento                       DateTime? @map("data_evento") @db.Timestamptz()
+  dataInicio                       DateTime? @map("data_inicio") @db.Timestamptz()
+  dataFim                          DateTime? @map("data_fim") @db.Timestamptz()
+  descricao                        String?
+  pixKey                           String?   @map("pix_key") @db.VarChar
+  beneficiario                     String?   @db.VarChar
+  banco                            String?   @db.VarChar
+  contaCorrente                    String?   @map("conta_corrente") @db.VarChar
+  agencia                          String?   @db.VarChar
+  aceitarTrocas                    Boolean?  @default(false) @map("aceitar_trocas")
+  fotoUrl                          String?   @map("foto_url")
+  formularioConvidadosHabilitado   Boolean?  @map("formulario_convidados_habilitado")
+  dataCorteCompetidores            DateTime? @map("data_corte_competidores") @db.Date
+  eventoTeraPassaportes            Boolean?  @map("evento_tera_passaportes")
+  enviarPassaportePorEmail         Boolean?  @map("enviar_passaporte_por_email")
+  createdAt                        DateTime? @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt                        DateTime? @updatedAt @map("updated_at") @db.Timestamptz()
+
+  clubeSede   Clube?             @relation("ClubeSede", fields: [clubeSedeId], references: [id])
+  lotes       EventoLote[]
+  inscricoes  EventoInscricao[]
+  envios      EventoEnvio[]
+  modalidades EventoModalidade[]
+
+  @@map("eventos")
+}
+
+model EventoLote {
+  id              String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  eventoId        String    @map("evento_id") @db.Uuid
+  nomeLote        String    @map("nome_lote") @db.VarChar
+  ordem           Int?      @default(0)
+  quantidadeTotal Int?      @map("quantidade_total")
+  quantidadeUsada Int?      @default(0) @map("quantidade_usada")
+  valor           Decimal?  @db.Decimal
+  ativo           Boolean?  @default(true)
+  dataInicio      DateTime? @map("data_inicio") @db.Timestamptz()
+  dataFim         DateTime? @map("data_fim") @db.Timestamptz()
+  createdAt       DateTime? @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt       DateTime? @updatedAt @map("updated_at") @db.Timestamptz()
+
+  evento     Evento            @relation(fields: [eventoId], references: [id])
+  inscricoes EventoInscricao[]
+
+  @@map("eventos_lotes")
+}
+
+model EventoInscricao {
+  id                 String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  eventoId           String    @map("evento_id") @db.Uuid
+  clubeId            String?   @map("clube_id") @db.Uuid
+  clubeNome          String    @map("clube_nome") @db.VarChar
+  clubeOrigemNome    String?   @map("clube_origem_nome")
+  envioId            String?   @map("envio_id") @db.Uuid
+  pessoaNome         String    @map("pessoa_nome") @db.VarChar
+  pessoaTipo         String?   @map("pessoa_tipo") @db.VarChar
+  tipoInscricao      String?   @map("tipo_inscricao") @db.VarChar
+  loteId             String?   @map("lote_id") @db.Uuid
+  loteNome           String?   @map("lote_nome") @db.VarChar
+  valorLote          Decimal?  @map("valor_lote") @db.Decimal
+  restricaoAlimentar Boolean?  @map("restricao_alimentar")
+  restricaoDescricao String?   @map("restricao_descricao")
+  comprovanteUrl     String?   @map("comprovante_url")
+  comprovanteNome    String?   @map("comprovante_nome") @db.VarChar
+  comprovanteMime    String?   @map("comprovante_mime") @db.VarChar
+  comprovanteTamanho Int?      @map("comprovante_tamanho")
+  status             String?   @default("realizada")
+  refeicoesCarga     Json?     @default("{}") @map("refeicoes_carga")
+  refeicoesUsado     Json?     @default("{}") @map("refeicoes_usado")
+  createdAt          DateTime? @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt          DateTime? @updatedAt @map("updated_at") @db.Timestamptz()
+
+  evento          Evento                           @relation(fields: [eventoId], references: [id])
+  clube           Clube?                           @relation(fields: [clubeId], references: [id])
+  lote            EventoLote?                      @relation(fields: [loteId], references: [id])
+  credenciamentos EventoCredenciamentoModalidade[]
+
+  @@map("eventos_inscricoes")
+}
+
+model EventoEnvio {
+  id         String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  eventoId   String    @map("evento_id") @db.Uuid
+  clubeId    String?   @map("clube_id") @db.Uuid
+  clubeNome  String    @map("clube_nome") @db.VarChar
+  createdAt  DateTime? @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt  DateTime? @updatedAt @map("updated_at") @db.Timestamptz()
+
+  evento       Evento                   @relation(fields: [eventoId], references: [id])
+  comprovantes EventoEnvioComprovante[]
+
+  @@map("eventos_envios")
+}
+
+model EventoEnvioComprovante {
+  id                 String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  envioId            String    @map("envio_id") @db.Uuid
+  comprovanteUrl     String    @map("comprovante_url")
+  comprovanteNome    String?   @map("comprovante_nome") @db.VarChar
+  comprovanteMime    String?   @map("comprovante_mime") @db.VarChar
+  comprovanteTamanho Int?      @map("comprovante_tamanho")
+  valor              Decimal?  @db.Decimal
+  createdAt          DateTime? @default(now()) @map("created_at") @db.Timestamptz()
+
+  envio EventoEnvio @relation(fields: [envioId], references: [id])
+
+  @@map("eventos_envios_comprovantes")
+}
+
+model Modalidade {
+  id        String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  nome      String    @db.VarChar
+  categoria String?   @db.VarChar
+  coletiva  Boolean?  @default(false)
+  createdAt DateTime? @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime? @updatedAt @map("updated_at") @db.Timestamptz()
+
+  eventos             EventoModalidade[]
+  bloqueiosOrigem     ModalidadeBloqueio[]             @relation("ModalidadeOrigem")
+  bloqueiosBloqueada  ModalidadeBloqueio[]             @relation("ModalidadeBloqueada")
+  credenciamentos     EventoCredenciamentoModalidade[]
+
+  @@map("modalidades")
+}
+
+model EventoModalidade {
+  id                  String @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  eventoId            String @map("evento_id") @db.Uuid
+  modalidadeId        String @map("modalidade_id") @db.Uuid
+  limiteParticipantes Int?   @map("limite_participantes")
+  ordem               Int?   @default(0)
+
+  evento     Evento     @relation(fields: [eventoId], references: [id])
+  modalidade Modalidade @relation(fields: [modalidadeId], references: [id])
+
+  @@map("eventos_modalidades")
+}
+
+model ModalidadeBloqueio {
+  id                    String @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  modalidadeIdOrigem    String @map("modalidade_id_origem") @db.Uuid
+  modalidadeIdBloqueada String @map("modalidade_id_bloqueada") @db.Uuid
+
+  modalidadeOrigem    Modalidade @relation("ModalidadeOrigem", fields: [modalidadeIdOrigem], references: [id])
+  modalidadeBloqueada Modalidade @relation("ModalidadeBloqueada", fields: [modalidadeIdBloqueada], references: [id])
+
+  @@map("modalidades_bloqueio")
+}
+
+model EventoCredenciamentoModalidade {
+  id           String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  eventoId     String   @map("evento_id") @db.Uuid
+  inscricaoId  String   @map("inscricao_id") @db.Uuid
+  modalidadeId String   @map("modalidade_id") @db.Uuid
+  delegadoNato Boolean? @default(false) @map("delegado_nato")
+
+  inscricao  EventoInscricao @relation(fields: [inscricaoId], references: [id])
+  modalidade Modalidade      @relation(fields: [modalidadeId], references: [id])
+
+  @@map("eventos_credenciamento_modalidade")
+}
+
+model PortalCalendarioUsuario {
+  id           BigInt  @id @default(autoincrement())
+  email        String
+  calendarId   String  @map("calendar_id")
+  nomeExibicao String? @map("nome_exibicao")
+
+  @@map("portal_calendarios_usuario")
+}
+
+model RtmaSnapshotParametros {
+  id        Int       @id @default(1)
+  dataInicio DateTime? @map("data_inicio") @db.Date
+  dataFim   DateTime? @map("data_fim") @db.Date
+  updatedAt DateTime? @map("updated_at")
+
+  @@map("rtma_snapshot_parametros")
+}
+
+model BackupUrlGoogleDrive {
+  id                String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  tabelaOrigem      String    @map("tabela_origem") @db.VarChar
+  registroId        String    @map("registro_id") @db.Uuid
+  campoUrl          String    @map("campo_url") @db.VarChar
+  urlOriginal       String    @map("url_original")
+  urlNova           String?   @map("url_nova")
+  statusMigracao    String?   @map("status_migracao") @db.VarChar
+  observacoes       String?
+  fileIdGoogleDrive String?   @map("file_id_google_drive")
+  dataBackup        DateTime? @map("data_backup") @db.Timestamptz()
+  dataMigracao      DateTime? @map("data_migracao") @db.Timestamptz()
+
+  @@map("backup_urls_google_drive")
+}
