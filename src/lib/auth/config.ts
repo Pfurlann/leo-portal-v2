@@ -29,11 +29,22 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         const { data: usuario, error } = await supabase
           .from('usuarios_acessos')
-          .select('*, clubes(nome)')
+          .select('*')
           .eq('email', email)
           .single()
 
-        if (error || !usuario || !usuario.ativo) return null
+        if (error) {
+          console.error('[auth] supabase query error:', error.message, error.code)
+          return null
+        }
+        if (!usuario) {
+          console.warn('[auth] user not found:', email)
+          return null
+        }
+        if (!usuario.ativo) {
+          console.warn('[auth] user inactive:', email)
+          return null
+        }
 
         // Password check: bcrypt hash or plaintext (migration period)
         let passwordValid = false
@@ -42,9 +53,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           passwordValid = isHash
             ? await bcrypt.compare(senha, usuario.senha)
             : usuario.senha === senha
+        } else {
+          console.warn('[auth] user has no senha field:', email)
         }
 
-        if (!passwordValid) return null
+        if (!passwordValid) {
+          console.warn('[auth] password invalid for:', email)
+          return null
+        }
 
         const alAtual = calcularAlAtual()
         let cargo: string | null = null
